@@ -1,0 +1,82 @@
+{
+  "renders_analyzed": 10,
+  "room_materials": {
+    "cocina": {
+      "surface": "wall_white",
+      "ph_id": null,
+      "hsv": [
+        208.125,
+        0.10648147761821747,
+        0.7254902124404907
+      ]
+    },
+    "sala": {
+      "surface": "wall_white",
+      "ph_id": null,
+      "hsv": [
+        206.6666717529297,
+        0.0896226316690445,
+        0.8352941274642944
+      ]
+    },
+    "room_2": {
+      "surface": "wall_white",
+      "ph_id": null,
+      "hsv": [
+        210.0,
+        0.09649122506380081,
+        0.8901960849761963
+      ]
+    },
+    "room_3": {
+      "surface": "wall_white",
+      "ph_id": null,
+      "hsv": [
+        204.0,
+        0.039215683937072754,
+        0.9843137264251709
+      ]
+    },
+    "balcon": {
+      "surface": "wall_white",
+      "ph_id": null,
+      "hsv": [
+        210.0,
+        0.11059907078742981,
+        0.8509804010391235
+      ]
+    },
+    "master": {
+      "surface": "wall_white",
+      "ph_id": null,
+      "hsv": [
+        208.69566345214844,
+        0.08260869234800339,
+        0.9019607901573181
+      ]
+    },
+    "hab": {
+      "surface": "wall_white",
+      "ph_id": null,
+      "hsv": [
+        207.27272033691406,
+        0.07725321501493454,
+        0.8470588326454163
+      ]
+    },
+    "comedor": {
+      "surface": "wall_white",
+      "ph_id": null,
+      "hsv": [
+        200.00001525878906,
+        0.045267485082149506,
+        0.9137254953384399
+      ]
+    }
+  },
+  "pbr_surfaces": {
+    "wall_white": false
+  },
+  "apply_script": "renders/cabrera/apply_materials.py",
+  "next_step": "blender --background model.glb --python renders/cabrera/apply_materials.py"
+}

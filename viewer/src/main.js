@@ -53,7 +53,7 @@ new RGBELoader().load(HDRI_URL, (hdr) => {
   scene.environment = pmrem.fromEquirectangular(hdr).texture;
   hdr.dispose();
 }, undefined, () => {
-  scene.add(new THREE.HemisphereLight(0xbcd0ff, 0x202018, 0.6));
+  if (!NOPP) scene.add(new THREE.HemisphereLight(0xbcd0ff, 0x202018, 0.6));
 });
 
 // ── Lights ────────────────────────────────────────────────────────────────────
@@ -102,7 +102,8 @@ if (TOUCH) {
 }
 
 // ── Postprocessing ────────────────────────────────────────────────────────────
-const post = createPostprocessing(renderer, scene, camera);
+const NOPP = new URLSearchParams(window.location.search).has('nopp');
+const post = NOPP ? null : createPostprocessing(renderer, scene, camera);
 
 // ── Camera tween (teleport) ───────────────────────────────────────────────────
 let tween = null;
@@ -299,8 +300,7 @@ function applyQuality(level) {
       if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; }
       break;
   }
-  post.setQuality(level);
-  post.setSize(window.innerWidth, window.innerHeight);
+  if (post) { post.setQuality(level); post.setSize(window.innerWidth, window.innerHeight); }
   localStorage.setItem(QUALITY_KEY, level);
 }
 
@@ -321,7 +321,7 @@ window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
-  post.setSize(window.innerWidth, window.innerHeight);
+  if (post) post.setSize(window.innerWidth, window.innerHeight);
   wpSystem.resize(window.innerWidth, window.innerHeight);
 });
 
@@ -354,7 +354,14 @@ function tick() {
     controls.update(dt);
   }
 
-  post.composer.render(dt);
+  if (post) post.composer.render(dt);
+  else {
+    renderer.render(scene, camera);
+    if (window.__captureNextFrame) {
+      window.__captureResult = renderer.domElement.toDataURL('image/png');
+      window.__captureNextFrame = false;
+    }
+  }
   wpSystem.render(scene, camera, dt);
   updateFps(performance.now());
 }
@@ -393,9 +400,44 @@ async function bootstrap() {
   if (initial && sceneSelect) sceneSelect.value = initial.id;
   await loadSceneByDescriptor(initial, true);
 
-  const vrBtn = VRButton.createButton(renderer);
-  Object.assign(vrBtn.style, { bottom: '12px', left: '50%', transform: 'translateX(-50%)', zIndex: '12' });
-  document.body.appendChild(vrBtn);
+  // Screenshotter mode: expose camera + auto-clear overlay
+  if (NOPP) {
+    scene.background = new THREE.Color(0x7aaed0);  // sky blue through glass
+    // Kill all lights (sun + hemisphere from HDRI fallback), add single soft ambient
+    scene.traverse(obj => { if (obj.isLight) obj.intensity = 0; });
+    scene.add(new THREE.AmbientLight(0xfff8f0, 0.8));
+    renderer.shadowMap.enabled = false;
+
+    window.__camera = camera;
+    window.__scene = scene;
+    window.__wpSystem = wpSystem;
+    const wpParam = new URLSearchParams(window.location.search).get('wp');
+    if (wpParam) {
+      const wp = wpSystem.getWaypoints().find(w => w.id === wpParam);
+      if (wp) {
+        camera.position.set(wp.position[0], wp.position[1] ?? EYE_HEIGHT, wp.position[2]);
+      }
+    } else {
+      const wps = wpSystem.getWaypoints();
+      if (wps.length) {
+        const wp = wps[0];
+        // Sala: west side looking east — shows floor texture + doors + depth
+        camera.position.set(wp.position[0] - 1.8, 1.5, wp.position[2] + 0.5);
+        camera.lookAt(wp.position[0] + 5.0, 1.1, wp.position[2] - 0.5);
+      }
+    }
+    await fade(0, 0);
+    hud.classList.add('hidden');
+    document.getElementById('topbar')?.remove();
+    wpSystem.setLabelsVisible(false);
+    wpSystem.setMarkersVisible(false);
+  }
+
+  if (!NOPP) {
+    const vrBtn = VRButton.createButton(renderer);
+    Object.assign(vrBtn.style, { bottom: '12px', left: '50%', transform: 'translateX(-50%)', zIndex: '12' });
+    document.body.appendChild(vrBtn);
+  }
 
   sceneSelect?.addEventListener('change', () => {
     const desc = available.find(s => s.id === sceneSelect.value);

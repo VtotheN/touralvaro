@@ -1,0 +1,99 @@
+{
+  "renders_analyzed": 8,
+  "room_materials": {
+    "room_0": {
+      "floor_surface": "wall_white",
+      "floor_ph_id": null,
+      "wall_surface": "wall_white",
+      "wall_ph_id": null,
+      "hsv": [
+        219.4279022216797,
+        0.06176307052373886,
+        0.6274510025978088
+      ]
+    },
+    "room_1": {
+      "floor_surface": "wood_floor",
+      "floor_ph_id": "wood_floor_deck",
+      "wall_surface": "wall_white",
+      "wall_ph_id": null,
+      "hsv": [
+        28.064516067504883,
+        0.3893181383609772,
+        0.4941176474094391
+      ]
+    },
+    "room_2": {
+      "floor_surface": "wall_white",
+      "floor_ph_id": null,
+      "wall_surface": "wall_white",
+      "wall_ph_id": null,
+      "hsv": [
+        120.0,
+        0.02578982152044773,
+        0.6980392336845398
+      ]
+    },
+    "room_3": {
+      "floor_surface": "wall_white",
+      "floor_ph_id": null,
+      "wall_surface": "wall_white",
+      "wall_ph_id": null,
+      "hsv": [
+        225.79830932617188,
+        0.09596779942512512,
+        0.7529411911964417
+      ]
+    },
+    "room_4": {
+      "floor_surface": "wall_white",
+      "floor_ph_id": null,
+      "wall_surface": "wall_white",
+      "wall_ph_id": null,
+      "hsv": [
+        217.5,
+        0.05420202761888504,
+        0.6274510025978088
+      ]
+    },
+    "room_5": {
+      "floor_surface": "wood_floor",
+      "floor_ph_id": "wood_floor_deck",
+      "wall_surface": "wall_white",
+      "wall_ph_id": null,
+      "hsv": [
+        25.958049774169922,
+        0.5232716798782349,
+        0.4745098054409027
+      ]
+    },
+    "room_6": {
+      "floor_surface": "wall_white",
+      "floor_ph_id": null,
+      "wall_surface": "wall_white",
+      "wall_ph_id": null,
+      "hsv": [
+        231.42857360839844,
+        0.07547913491725922,
+        0.686274528503418
+      ]
+    },
+    "room_7": {
+      "floor_surface": "wall_white",
+      "floor_ph_id": null,
+      "wall_surface": "wall_white",
+      "wall_ph_id": null,
+      "hsv": [
+        22.85713768005371,
+        0.09037845581769943,
+        0.5960784554481506
+      ]
+    }
+  },
+  "pbr_surfaces": {
+    "wall_white": false,
+    "wood_floor": true
+  },
+  "apply_script": "test_projects/proyecto_test_1/renders/apply_materials.py",
+  "next_step": "blender --background model.glb --python test_projects/proyecto_test_1/renders/apply_materials.py"
+}

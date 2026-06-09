@@ -51,6 +51,12 @@ export const KNOWN_SCENES = [
     url: '/models/cabrera-casa.glb',
     baked: false,
   },
+  {
+    id: 'bf81-interior',
+    label: 'BF 81 — Apartamento',
+    url: '/models/bf81-interior.glb',
+    baked: false,
+  },
 ];
 
 // Hace HEAD a cada URL y devuelve solo las que responden 200.

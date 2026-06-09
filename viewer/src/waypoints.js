@@ -121,5 +121,19 @@ export function createWaypointSystem() {
     labelRenderer.domElement.style.visibility = v ? 'visible' : 'hidden';
   }
 
-  return { setWaypoints, render, resize, setLabelsVisible };
+  function setMarkersVisible(v) {
+    for (const { inner, outer } of entries) {
+      inner.visible = v;
+      outer.visible = v;
+    }
+  }
+
+  let _wps = [];
+  const _origSet = setWaypoints;
+  function setWaypointsTracked(scene, waypoints, onTeleport) {
+    _wps = waypoints || [];
+    _origSet(scene, waypoints, onTeleport);
+  }
+
+  return { setWaypoints: setWaypointsTracked, getWaypoints: () => _wps, render, resize, setLabelsVisible, setMarkersVisible };
 }

@@ -1,0 +1,65 @@
+[
+  {
+    "id": "sala",
+    "label": "Sala",
+    "position": [
+      2.9,
+      1.8,
+      -2.1
+    ]
+  },
+  {
+    "id": "comedor",
+    "label": "Comedor",
+    "position": [
+      7.4,
+      1.8,
+      -2.1
+    ]
+  },
+  {
+    "id": "cocina",
+    "label": "Cocina",
+    "position": [
+      10.7,
+      1.8,
+      -2.1
+    ]
+  },
+  {
+    "id": "master",
+    "label": "Dormitorio Principal",
+    "position": [
+      2.25,
+      1.8,
+      -6.1
+    ]
+  },
+  {
+    "id": "hab2",
+    "label": "Habitaci\u00f3n 2",
+    "position": [
+      6.4,
+      1.8,
+      -6.1
+    ]
+  },
+  {
+    "id": "ba\u00f1o",
+    "label": "Ba\u00f1o",
+    "position": [
+      9.4,
+      1.8,
+      -5.1
+    ]
+  },
+  {
+    "id": "pasillo",
+    "label": "Pasillo",
+    "position": [
+      5.25,
+      1.8,
+      -8.7
+    ]
+  }
+]
