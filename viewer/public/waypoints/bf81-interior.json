@@ -37,7 +37,7 @@
   },
   {
     "id": "hab2",
-    "label": "Habitaci\u00f3n 2",
+    "label": "Habitación 2",
     "position": [
       6.4,
       1.8,
@@ -45,8 +45,8 @@
     ]
   },
   {
-    "id": "ba\u00f1o",
-    "label": "Ba\u00f1o",
+    "id": "baño",
+    "label": "Baño",
     "position": [
       9.4,
       1.8,

@@ -193,6 +193,18 @@ MATS = {
     "window_frame":  make_mat("window_frame",  (0.72, 0.70, 0.68), 0.20),
     "glass":         make_mat("glass",         (0.80, 0.90, 1.00), 0.05, 0.0),
     "baseboard":     make_mat("baseboard",     (0.99, 0.99, 0.98), 0.30),
+    # Furniture materials
+    "fabric_gray":    make_mat("fabric_gray",    (0.38, 0.38, 0.42), 0.90),
+    "fabric_cream":   make_mat("fabric_cream",   (0.88, 0.83, 0.75), 0.90),
+    "wood_dark":      make_mat("wood_dark",      (0.22, 0.13, 0.07), 0.70),
+    "wood_medium":    make_mat("wood_medium",    (0.42, 0.26, 0.11), 0.70),
+    "wood_light":     make_mat("wood_light",     (0.72, 0.55, 0.32), 0.65),
+    "ceramic_white":  make_mat("ceramic_white",  (0.92, 0.91, 0.89), 0.15),
+    "kitchen_white":  make_mat("kitchen_white",  (0.88, 0.87, 0.85), 0.25),
+    "marble_counter": make_mat("marble_counter", (0.91, 0.90, 0.88), 0.10),
+    "metal_chrome":   make_mat("metal_chrome",   (0.72, 0.72, 0.75), 0.05),
+    "rug_warm":       make_mat("rug_warm",       (0.55, 0.42, 0.32), 0.95),
+    "cushion_blue":   make_mat("cushion_blue",   (0.28, 0.38, 0.58), 0.88),
 }
 glass_mat = MATS["glass"]
 glass_mat.blend_method = "BLEND"
@@ -394,6 +406,125 @@ if bg is None:
 bg.inputs["Color"].default_value = (0.6, 0.7, 1.0, 1.0)
 bg.inputs["Strength"].default_value = 0.4
 
+# ── Furniture placement ───────────────────────────────────────────────────────
+def place_furniture(room_id, x0, y0, w, d, scene):
+    xi  = x0 + 0.15        # inner x min (west wall inner face)
+    yi  = y0 + 0.15        # inner y min (front wall inner face)
+    xe  = x0 + w - 0.15   # inner x max (east wall inner face)
+    ye  = y0 + d - 0.15   # inner y max (back wall inner face)
+    iw  = xe - xi          # inner width
+    id_ = ye - yi          # inner depth
+
+    if room_id == "sala":
+        sw  = min(iw - 0.40, 3.50)
+        sx  = xi + (iw - sw) / 2
+        sBy = ye - 0.18
+        add_box("sala_sofa_back",    sw,          0.18, 0.88, sx,               sBy,          0.00, "fabric_gray")
+        add_box("sala_sofa_base",    sw,          0.90, 0.42, sx,               sBy - 0.90,   0.00, "fabric_gray")
+        add_box("sala_sofa_arm_l",   0.18,        0.90, 0.62, sx,               sBy - 0.90,   0.00, "fabric_gray")
+        add_box("sala_sofa_arm_r",   0.18,        0.90, 0.62, sx + sw - 0.18,   sBy - 0.90,   0.00, "fabric_gray")
+        cSW = sw / 3 - 0.04
+        add_box("sala_cush1",   cSW, 0.72, 0.10, sx + 0.03,          sBy - 0.88, 0.42, "cushion_blue")
+        add_box("sala_cush2",   cSW, 0.72, 0.10, sx + sw/3 + 0.01,   sBy - 0.88, 0.42, "cushion_blue")
+        add_box("sala_cush3",   cSW, 0.72, 0.10, sx + 2*sw/3 - 0.01, sBy - 0.88, 0.42, "fabric_cream")
+        ctW = min(iw * 0.28, 1.40)
+        ctD = min(id_ * 0.17, 0.70)
+        ctX = xi + (iw - ctW) / 2
+        ctY = sBy - 0.90 - 0.45 - ctD
+        add_box("sala_coffee_top",  ctW,        ctD,        0.04, ctX,        ctY,        0.38, "wood_dark")
+        add_box("sala_coffee_body", ctW - 0.10, ctD - 0.10, 0.38, ctX + 0.05, ctY + 0.05, 0.00, "wood_dark")
+        rgW = min(iw - 0.30, 4.00)
+        rgD = min(id_ * 0.50, 2.20)
+        rgY = sBy - 0.90 - 0.35 - rgD
+        add_box("sala_rug",  rgW, rgD, 0.02, xi + (iw - rgW) / 2, max(rgY, yi), 0.00, "rug_warm")
+        tvW = min(iw - 1.00, 3.00)
+        tvX = xi + (iw - tvW) / 2
+        add_box("sala_tv_unit",   tvW,        0.45, 0.50, tvX,          yi,       0.00, "wood_medium")
+        add_box("sala_tv_screen", tvW - 0.30, 0.04, 0.58, tvX + 0.15,   yi - 0.01, 0.52, "metal_chrome")
+
+    elif room_id == "comedor":
+        tW = min(iw * 0.48, 1.40)
+        tD = min(id_ * 0.22, 0.85)
+        tX = xi + (iw - tW) / 2
+        tY = yi + (id_ - tD) / 2
+        add_box("com_table_top",  tW,        tD,        0.04, tX,        tY,        0.73, "wood_dark")
+        add_box("com_table_body", tW - 0.06, tD - 0.06, 0.73, tX + 0.03, tY + 0.03, 0.00, "wood_dark")
+        for i in range(2):
+            cX = tX + i * (tW / 2)
+            add_box(f"com_cs{i}_seat", 0.45, 0.45, 0.44, cX, tY - 0.60, 0.00, "fabric_cream")
+            add_box(f"com_cs{i}_back", 0.45, 0.06, 0.44, cX, tY - 0.22, 0.44, "fabric_cream")
+            add_box(f"com_cn{i}_seat", 0.45, 0.45, 0.44, cX, tY + tD + 0.15, 0.00, "fabric_cream")
+            add_box(f"com_cn{i}_back", 0.45, 0.06, 0.44, cX, tY + tD + 0.53, 0.44, "fabric_cream")
+
+    elif room_id == "cocina":
+        ctrE_d = id_ - 0.10
+        add_box("coc_ctr_e_base", 0.55, ctrE_d,        0.88, xe - 0.55, yi,        0.00, "kitchen_white")
+        add_box("coc_ctr_e_top",  0.60, ctrE_d + 0.06, 0.04, xe - 0.57, yi - 0.03, 0.88, "marble_counter")
+        ctrS_w = iw - 0.62
+        add_box("coc_ctr_s_base", ctrS_w,        0.55, 0.88, xi,        yi,        0.00, "kitchen_white")
+        add_box("coc_ctr_s_top",  ctrS_w + 0.06, 0.60, 0.04, xi - 0.03, yi - 0.03, 0.88, "marble_counter")
+        islW = min(iw * 0.42, 1.40)
+        islD = min(id_ * 0.18, 0.75)
+        islX = xi + (iw - 0.55 - islW) * 0.40
+        islY = yi + 0.65 + 0.35
+        add_box("coc_island",     islW,        islD,        0.92, islX,        islY,        0.00, "kitchen_white")
+        add_box("coc_island_top", islW + 0.06, islD + 0.06, 0.03, islX - 0.03, islY - 0.03, 0.92, "marble_counter")
+        add_box("coc_cab_e", 0.35, ctrE_d,       0.70, xe - 0.35, yi,        1.55, "kitchen_white")
+        add_box("coc_cab_s", ctrS_w - 0.10, 0.35, 0.70, xi,        yi,        1.55, "kitchen_white")
+        add_box("coc_sink",  0.48, 0.46, 0.04,   xe - 0.52, yi + id_ * 0.25, 0.88, "metal_chrome")
+
+    elif room_id == "master":
+        bW = min(iw * 0.42, 1.80)
+        bD = min(id_ * 0.55, 2.00)
+        bX = xi + (iw - bW) / 2 - 0.25
+        bY = ye - bD - 0.05
+        add_box("mas_bed_frame",  bW,          bD,    0.20, bX,              bY,              0.00, "wood_medium")
+        add_box("mas_mattress",   bW,          bD,    0.25, bX,              bY,              0.20, "fabric_cream")
+        add_box("mas_pillow1",    bW * 0.46,   0.48,  0.12, bX + 0.04,       bY + bD - 0.52,  0.45, "fabric_cream")
+        add_box("mas_pillow2",    bW * 0.46,   0.48,  0.12, bX + bW * 0.50,  bY + bD - 0.52,  0.45, "fabric_cream")
+        add_box("mas_bedcover",   bW,          bD,    0.06, bX,              bY,              0.45, "fabric_gray")
+        add_box("mas_headboard",  bW + 0.10,   0.12,  0.90, bX - 0.05,       ye - 0.12,       0.00, "wood_medium")
+        add_box("mas_ns_l",       0.45, 0.45, 0.50,   bX - 0.55,            bY,              0.00, "wood_medium")
+        add_box("mas_ns_r",       0.45, 0.45, 0.50,   bX + bW + 0.10,       bY,              0.00, "wood_medium")
+        add_box("mas_wardrobe",   1.30, 0.60, 2.40,   xe - 1.30,            yi,              0.00, "wood_light")
+
+    elif room_id == "hab2":
+        bW = min(iw * 0.44, 1.60)
+        bD = min(id_ * 0.52, 1.90)
+        bX = xi + (iw - bW) / 2 - 0.20
+        bY = ye - bD - 0.05
+        add_box("h2_bed_frame",   bW,          bD,    0.20, bX,              bY,              0.00, "wood_light")
+        add_box("h2_mattress",    bW,          bD,    0.22, bX,              bY,              0.20, "fabric_cream")
+        add_box("h2_headboard",   bW + 0.10,   0.12,  0.80, bX - 0.05,       ye - 0.12,       0.00, "wood_light")
+        add_box("h2_pillow",      bW - 0.08,   0.45,  0.10, bX + 0.04,       bY + bD - 0.50,  0.42, "fabric_cream")
+        add_box("h2_bedcover",    bW,          bD,    0.05, bX,              bY,              0.42, "fabric_gray")
+        add_box("h2_ns",          0.42, 0.42, 0.48,   bX - 0.52,            bY,              0.00, "wood_light")
+        add_box("h2_desk",        1.20, 0.55, 0.75,   xe - 1.20,            yi,              0.00, "wood_medium")
+        add_box("h2_chair_seat",  0.48, 0.48, 0.46,   xe - 1.08,            yi + 0.65,       0.00, "fabric_gray")
+        add_box("h2_wardrobe",    0.65, 0.58, 2.40,   xi,                   yi,              0.00, "wood_light")
+
+    elif room_id == "baño":
+        add_box("ban_toilet_base", 0.38, 0.55, 0.40, xe - 0.42, yi,        0.00, "ceramic_white")
+        add_box("ban_toilet_tank", 0.35, 0.16, 0.32, xe - 0.40, yi,        0.40, "ceramic_white")
+        add_box("ban_toilet_seat", 0.34, 0.45, 0.04, xe - 0.40, yi + 0.02, 0.38, "ceramic_white")
+        vanW = min(iw * 0.38, 0.70)
+        add_box("ban_vanity_cab",  vanW,        0.48,  0.82, xi,             yi,             0.00, "kitchen_white")
+        add_box("ban_vanity_top",  vanW + 0.06, 0.52,  0.03, xi - 0.03,      yi - 0.02,      0.82, "marble_counter")
+        add_box("ban_sink",        vanW - 0.18, 0.36,  0.06, xi + 0.09,      yi + 0.06,      0.82, "ceramic_white")
+        add_box("ban_mirror",      vanW,        0.03,  0.80, xi,             yi - 0.03,      0.88, "metal_chrome")
+        sh = min(min(iw, id_) * 0.50, 0.85)
+        add_box("ban_shower_tray", sh,          sh,    0.06, xe - sh,        ye - sh,        0.00, "ceramic_white")
+        add_box("ban_shower_w1",   sh,          0.04,  2.00, xe - sh,        ye - sh - 0.04, 0.00, "ceramic_white")
+        add_box("ban_shower_w2",   0.04,  sh + 0.08,   2.00, xe - sh - 0.04, ye - sh - 0.08, 0.00, "ceramic_white")
+
+    elif room_id == "pasillo":
+        conX = xi + iw * 0.35
+        add_box("pas_console",     1.00, 0.32, 0.82, conX,         yi,        0.00, "wood_dark")
+        add_box("pas_console_top", 1.06, 0.36, 0.03, conX - 0.03,  yi - 0.02, 0.82, "wood_dark")
+        add_box("pas_deco1",       0.12, 0.12, 0.22, conX + 0.15,  yi + 0.01, 0.85, "ceramic_white")
+        add_box("pas_deco2",       0.18, 0.18, 0.35, conX + 0.55,  yi + 0.01, 0.85, "cushion_blue")
+
+
 # ── Build all rooms ───────────────────────────────────────────────────────────
 print(f"\nBuilding: {cfg.get('name', 'apartment')}")
 rooms = cfg.get("rooms", [])
@@ -401,6 +532,11 @@ for room in rooms:
     build_room(room)
 add_room_lights(rooms)
 print(f"Rooms built: {len(rooms)}")
+
+# ── Place furniture ───────────────────────────────────────────────────────────
+for room in rooms:
+    place_furniture(room["id"], room["x"], room["y"], room["w"], room["d"], bpy.context.scene)
+print("Furniture placed")
 
 # ── Export GLB ────────────────────────────────────────────────────────────────
 os.makedirs(os.path.dirname(output_path), exist_ok=True) if os.path.dirname(output_path) else None

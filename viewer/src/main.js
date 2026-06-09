@@ -10,6 +10,7 @@ import { discoverAvailableScenes, pickDefaultScene } from './scenes.js';
 import { createPostprocessing } from './postprocessing.js';
 import { createWaypointSystem, loadWaypoints } from './waypoints.js';
 import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
+import { Sky } from 'three/examples/jsm/objects/Sky.js';
 
 const HDRI_URL = 'https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/studio_small_03_1k.hdr';
 const QUALITY_KEY = 'touralvaro.quality';
@@ -46,26 +47,51 @@ scene.background = new THREE.Color(0x101316);
 const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.05, 200);
 camera.position.set(0, EYE_HEIGHT, 3);
 
-// ── HDRI ──────────────────────────────────────────────────────────────────────
+// ── HDRI (shared PMREMGenerator — used by setupSky and optional HDRI load) ────
 const pmrem = new THREE.PMREMGenerator(renderer);
 pmrem.compileEquirectangularShader();
-new RGBELoader().load(HDRI_URL, (hdr) => {
-  scene.environment = pmrem.fromEquirectangular(hdr).texture;
-  hdr.dispose();
-}, undefined, () => {
-  if (!NOPP) scene.add(new THREE.HemisphereLight(0xbcd0ff, 0x202018, 0.6));
-});
 
 // ── Lights ────────────────────────────────────────────────────────────────────
-const sun = new THREE.DirectionalLight(0xffeacc, 2.0);
-sun.position.set(4, 6, 3);
+const sun = new THREE.DirectionalLight(0xfff0cc, 1.8);
 sun.castShadow = true;
 sun.shadow.mapSize.set(2048, 2048);
 sun.shadow.camera.near = 0.5; sun.shadow.camera.far = 30;
 sun.shadow.camera.left = -10; sun.shadow.camera.right = 10;
 sun.shadow.camera.top = 10;  sun.shadow.camera.bottom = -10;
 sun.shadow.bias = -0.0005;
-scene.add(sun, new THREE.AmbientLight(0xffffff, 0.15));
+scene.add(sun, new THREE.AmbientLight(0xfff5e0, 0.2));
+
+// ── Sky ───────────────────────────────────────────────────────────────────────
+function setupSky(scene, renderer) {
+  const sky = new Sky();
+  sky.scale.setScalar(2000);
+
+  const uniforms = sky.material.uniforms;
+  uniforms['turbidity'].value = 3.5;
+  uniforms['rayleigh'].value = 1.8;
+  uniforms['mieCoefficient'].value = 0.005;
+  uniforms['mieDirectionalG'].value = 0.82;
+
+  // São Paulo ~3pm: azimuth 215° (SW), elevation 35°
+  const phi   = THREE.MathUtils.degToRad(90 - 35);  // 55° from zenith
+  const theta = THREE.MathUtils.degToRad(215);
+  const sunDir = new THREE.Vector3();
+  sunDir.setFromSphericalCoords(1, phi, theta);
+  uniforms['sunPosition'].value.copy(sunDir);
+
+  scene.add(sky);
+  scene.background = null; // sky mesh handles background
+
+  // Reposition existing sun light to match sky sun direction
+  sun.position.copy(sunDir).multiplyScalar(100);
+  sun.color.set(0xfff0cc);
+
+  // Generate environment map from sky for PBR reflections (uses shared pmrem)
+  const skyRT = pmrem.fromScene(sky);
+  if (!scene.environment) scene.environment = skyRT.texture;
+
+  return sky;
+}
 
 // ── Loaders ───────────────────────────────────────────────────────────────────
 const dracoLoader = new DRACOLoader().setDecoderPath('https://www.gstatic.com/draco/v1/decoders/');
@@ -400,9 +426,22 @@ async function bootstrap() {
   if (initial && sceneSelect) sceneSelect.value = initial.id;
   await loadSceneByDescriptor(initial, true);
 
+  // Add procedural sky (non-NOPP mode)
+  if (!NOPP) {
+    setupSky(scene, renderer);
+    // Optionally upgrade env map with HDRI if polyhaven is reachable
+    new RGBELoader().load(HDRI_URL, (hdr) => {
+      scene.environment = pmrem.fromEquirectangular(hdr).texture;
+      hdr.dispose();
+    }, undefined, () => {
+      // HDRI failed — sky env map already set, add hemisphere fill light
+      scene.add(new THREE.HemisphereLight(0xbcd0ff, 0x202018, 0.5));
+    });
+  }
+
   // Screenshotter mode: expose camera + auto-clear overlay
   if (NOPP) {
-    scene.background = new THREE.Color(0x7aaed0);  // sky blue through glass
+    scene.background = new THREE.Color(0x6ab8d4);  // warm Brazilian sky blue through glass
     // Kill all lights (sun + hemisphere from HDRI fallback), add single soft ambient
     scene.traverse(obj => { if (obj.isLight) obj.intensity = 0; });
     scene.add(new THREE.AmbientLight(0xfff8f0, 0.8));
