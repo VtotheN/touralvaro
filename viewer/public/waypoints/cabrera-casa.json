@@ -1,0 +1,9 @@
+[
+  { "id": "sala",    "label": "Sala",         "position": [0.5,  1.8,  2.5]  },
+  { "id": "comedor", "label": "Comedor",      "position": [3.2,  1.8,  0.0]  },
+  { "id": "cocina",  "label": "Cocina",       "position": [5.5,  1.8, -1.0]  },
+  { "id": "balcon",  "label": "Balcón",       "position": [0.0,  1.8,  5.5]  },
+  { "id": "master",  "label": "Hab. Master",  "position": [-4.75, 1.8, -2.3] },
+  { "id": "hab2",    "label": "Habitación 2", "position": [-0.75, 1.8, -3.0] },
+  { "id": "hab3",    "label": "Habitación 3", "position": [2.75,  1.8, -3.0] }
+]

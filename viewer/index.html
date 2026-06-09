@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>touralvaro — Tour virtual</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; overflow: hidden; height: 100%;
+      background: #000; color: #fff;
+      font-family: -apple-system, system-ui, 'Segoe UI', sans-serif;
+      -webkit-font-smoothing: antialiased; }
+
+    #app { position: fixed; inset: 0; }
+    canvas { display: block; }
+
+    /* ── Fade overlay (starts opaque, fades in on load) ── */
+    #fade-overlay {
+      position: fixed; inset: 0;
+      background: #000; opacity: 1;
+      pointer-events: none; z-index: 20;
+    }
+
+    /* ── Progress bar ── */
+    #progress-bar {
+      position: fixed; top: 0; left: 0;
+      height: 2px; width: 0%;
+      background: linear-gradient(90deg, #4a9eff, #a78bfa);
+      transition: width 0.18s linear, opacity 0.32s ease;
+      pointer-events: none; z-index: 30;
+    }
+
+    /* ── HUD (center overlay before entering) ── */
+    #hud {
+      position: fixed; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none; text-align: center;
+      background: rgba(5,5,5,0.72);
+      padding: 28px 36px 24px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.10);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transition: opacity .25s ease;
+      z-index: 10; min-width: 280px;
+    }
+    #hud h1 {
+      margin: 0 0 4px;
+      font-size: 22px; font-weight: 700;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #fff 60%, #a78bfa);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    #hud .hud-sub {
+      margin: 0 0 16px;
+      font-size: 13px; opacity: 0.55; font-weight: 400;
+    }
+    #hud .hud-cta {
+      margin: 0 0 12px;
+      font-size: 15px; opacity: 0.9; font-weight: 500;
+    }
+    #hud .hud-keys {
+      display: flex; gap: 18px; justify-content: center; flex-wrap: wrap;
+      margin-top: 4px;
+    }
+    #hud .hud-keys span {
+      font-size: 11px; opacity: 0.45;
+      font-family: ui-monospace, Menlo, monospace;
+    }
+    #hud .hud-wp-hint {
+      margin-top: 14px; padding-top: 12px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      font-size: 12px; opacity: 0.5;
+    }
+    #hud.hidden { opacity: 0; pointer-events: none; }
+
+    /* ── Debug stats (hidden; toggle with ` key) ── */
+    #stats {
+      position: fixed; left: 10px; bottom: 10px;
+      font-size: 11px; color: #9ee; opacity: .7;
+      font-family: ui-monospace, Menlo, monospace;
+      z-index: 10; display: none;
+    }
+    #fps {
+      position: fixed; right: 10px; bottom: 10px;
+      font-size: 11px; color: #cfc; opacity: .65;
+      font-family: ui-monospace, Menlo, monospace;
+      z-index: 10; display: none;
+    }
+
+    /* ── Top bar ── */
+    #topbar {
+      position: fixed; top: 12px; right: 12px; z-index: 12;
+      display: flex; gap: 6px; align-items: center;
+      background: rgba(5,5,5,0.60);
+      border: 1px solid rgba(255,255,255,0.10);
+      border-radius: 12px;
+      padding: 7px 10px;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    #topbar select, #topbar button {
+      background: rgba(255,255,255,0.07);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.13);
+      padding: 5px 9px;
+      border-radius: 7px;
+      font-size: 12px;
+      font-family: inherit;
+      cursor: pointer;
+      outline: none;
+      transition: background 0.12s, border-color 0.12s;
+    }
+    #topbar select:hover, #topbar button:hover {
+      background: rgba(255,255,255,0.13);
+      border-color: rgba(255,255,255,0.25);
+    }
+    #topbar select:disabled { opacity: 0.35; cursor: not-allowed; }
+    #topbar .sep {
+      width: 1px; height: 18px;
+      background: rgba(255,255,255,0.12);
+      flex-shrink: 0;
+    }
+
+    @media (max-width: 600px) {
+      #topbar { flex-wrap: wrap; right: 8px; top: 8px; max-width: calc(100vw - 16px); }
+      #topbar select, #topbar button { font-size: 11px; padding: 4px 7px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <div id="fade-overlay"></div>
+  <div id="progress-bar"></div>
+
+  <div id="topbar">
+    <select id="scene-select" title="Escena"></select>
+    <div class="sep"></div>
+    <select id="quality-select" title="Calidad">
+      <option value="low">Bajo</option>
+      <option value="medium">Medio</option>
+      <option value="high" selected>Alto</option>
+      <option value="ultra">Ultra</option>
+    </select>
+    <button id="fullscreen-btn" title="Pantalla completa">⛶</button>
+  </div>
+
+  <div id="hud">
+    <h1>touralvaro</h1>
+    <p class="hud-sub">Tour virtual inmersivo</p>
+    <p class="hud-cta">Haz clic para explorar</p>
+    <div class="hud-keys">
+      <span>WASD caminar</span>
+      <span>ratón mirar</span>
+      <span>Shift correr</span>
+      <span>ESC salir</span>
+    </div>
+    <p class="hud-wp-hint">● Clic en los puntos para teletransportarte</p>
+  </div>
+
+  <div id="stats"></div>
+  <div id="fps"></div>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

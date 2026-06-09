@@ -1,0 +1,6 @@
+[
+  { "id": "sala",    "label": "Sala",     "position": [0.0,  1.8,  0.0]  },
+  { "id": "cocina",  "label": "Cocina",   "position": [4.0,  1.8, -0.5]  },
+  { "id": "master",  "label": "Master",   "position": [-0.5, 1.8, -4.75] },
+  { "id": "hab2",    "label": "Hab. 2",   "position": [2.5,  1.8, -4.5]  }
+]

@@ -1,0 +1,4 @@
+[
+  { "id": "centro", "label": "Centro", "position": [0.0, 1.8,  0.0] },
+  { "id": "sofa",   "label": "Sofá",   "position": [-1.5, 1.8, 1.5]  }
+]

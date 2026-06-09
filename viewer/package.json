@@ -1,0 +1,22 @@
+{
+  "name": "touralvaro-viewer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "optimize": "gltf-transform optimize public/models/escena-demo.glb public/models/escena-demo.optimized.glb --texture-compress webp"
+  },
+  "dependencies": {
+    "postprocessing": "^6.39.1",
+    "realism-effects": "^1.1.2",
+    "three": "^0.169.0",
+    "three-mesh-bvh": "^0.8.0"
+  },
+  "devDependencies": {
+    "@gltf-transform/cli": "^4.1.0",
+    "vite": "^5.4.0"
+  }
+}
