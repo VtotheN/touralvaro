@@ -665,6 +665,19 @@ def build_room(room):
         add_plane(f"{rid}_ceiling", w, d, x, y, z_off + WALL_H, rx=math.pi, mat_name="mat_sky_ceil")
     else:
         add_plane(f"{rid}_ceiling", w, d, x, y, z_off + WALL_H, rx=math.pi, mat_name=ceiling_mat)
+        # Ceiling emissive fill — prevents OIDN crushing dark ceiling/arch geometry in poorly lit rooms
+        _cfm_name = "mat_ceil_fill"
+        if _cfm_name not in MATS:
+            cfm = bpy.data.materials.new(_cfm_name)
+            cfm.use_nodes = True
+            cfm.node_tree.nodes.clear()
+            cfm_em  = cfm.node_tree.nodes.new("ShaderNodeEmission")
+            cfm_em.inputs["Strength"].default_value = 1.5
+            cfm_em.inputs["Color"].default_value    = (0.96, 0.94, 0.90, 1.0)
+            cfm_out = cfm.node_tree.nodes.new("ShaderNodeOutputMaterial")
+            cfm.node_tree.links.new(cfm_em.outputs[0], cfm_out.inputs[0])
+            MATS[_cfm_name] = cfm
+        add_box(f"{rid}_c_efill", w, d, 0.05, x, y, z_off + WALL_H - 0.06, _cfm_name)
 
     add_box(f"{rid}_base_s", w,    0.01, 0.10, x,             y,             z_off, base_mat)
     add_box(f"{rid}_base_n", w,    0.01, 0.10, x,             y + d - 0.01,  z_off, base_mat)
@@ -751,6 +764,36 @@ def build_room(room):
             add_box(f"{rid}_wbd_e_{off}", BT, ww + 0.2, wh + 0.2, x + w + BD, oy - (ww+0.2)/2, wz - (wh+0.2)/2, _win_mat_name)
             add_box(f"{rid}_wfi_e_{off}", BT*2, ww - 0.05, wh - 0.05, x + w - FI - BT*2, oy - (ww-0.05)/2, wz - (wh-0.05)/2, _win_mat_name)
 
+    # South wall emissive fill — guarantees south-facing pixels render warm gray not void
+    _sfm_name = "mat_south_fill"
+    if _sfm_name not in MATS:
+        sfm = bpy.data.materials.new(_sfm_name)
+        sfm.use_nodes = True
+        sfm.node_tree.nodes.clear()
+        sfm_em  = sfm.node_tree.nodes.new("ShaderNodeEmission")
+        sfm_em.inputs["Strength"].default_value = 3.0
+        sfm_em.inputs["Color"].default_value    = (0.8, 0.75, 0.70, 1.0)
+        sfm_out = sfm.node_tree.nodes.new("ShaderNodeOutputMaterial")
+        sfm.node_tree.links.new(sfm_em.outputs[0], sfm_out.inputs[0])
+        MATS[_sfm_name] = sfm
+    add_box(f"{rid}_s_efill", w + 0.6, 0.30, WALL_H, x - 0.3, y + 0.15, z_off, _sfm_name)
+
+    # West and east wall emissive fills — prevents Z-fighting artifacts at shared walls
+    # (e.g. sala west wall = master east wall at same x) from showing as black voids.
+    _wefm_name = "mat_wall_fill"
+    if _wefm_name not in MATS:
+        wefm = bpy.data.materials.new(_wefm_name)
+        wefm.use_nodes = True
+        wefm.node_tree.nodes.clear()
+        wefm_em  = wefm.node_tree.nodes.new("ShaderNodeEmission")
+        wefm_em.inputs["Strength"].default_value = 1.0
+        wefm_em.inputs["Color"].default_value    = (0.84, 0.80, 0.75, 1.0)
+        wefm_out = wefm.node_tree.nodes.new("ShaderNodeOutputMaterial")
+        wefm.node_tree.links.new(wefm_em.outputs[0], wefm_out.inputs[0])
+        MATS[_wefm_name] = wefm
+    add_box(f"{rid}_w_efill", 0.20, d + 0.4, WALL_H, x + 0.01,     y - 0.2, z_off, _wefm_name)
+    add_box(f"{rid}_e_efill", 0.20, d + 0.4, WALL_H, x + w - 0.21, y - 0.2, z_off, _wefm_name)
+
     print(f"  Built room: {rid} ({w}×{d}m) z={z_off}")
 
 # ── Interior point lights ─────────────────────────────────────────────────────
@@ -798,9 +841,21 @@ def add_room_lights(rooms):
             location=(x + w/2, y + d/2, z_off + 0.25))
         fill = bpy.context.active_object
         fill.name = f"light_{room['id']}_fill"
-        fill.data.energy          = area * 3
+        fill.data.energy          = area * 10
         fill.data.color           = (1.0, 0.92, 0.78)
         fill.data.shadow_soft_size = min(w, d) * 0.5
+
+        # South-wall fill — prevents OIDN from crushing south-facing surfaces to black
+        bpy.ops.object.light_add(type="AREA",
+            location=(x + w/2, y + 0.40, z_off + WALL_H * 0.5))
+        sf = bpy.context.active_object
+        sf.name = f"light_{room['id']}_south_fill"
+        sf.data.shape  = "RECTANGLE"
+        sf.data.size   = min(w * 0.8, 2.0)
+        sf.data.size_y = WALL_H * 0.6
+        sf.data.energy = area * 5
+        sf.data.color  = (1.0, 0.95, 0.85)
+        sf.rotation_euler = (math.radians(-90), 0, 0)  # faces -Y = south, directly fills south wall face
 
         # Window fill lights — invisible area lights just outside each window
         # Simulates daylight entering through glass. 6500K daylight color.
@@ -1264,15 +1319,19 @@ def add_exterior_environment(cfg):
 
     # 4. Building facade panels (exterior stucco faces visible from outside)
     facade_h = WALL_H * 2.0  # two-storey facade height
+    # Offset 0.40m outside building walls — prevents Z-fighting with interior room walls
+    # that share the same boundary coordinates.
+    FACADE_GAP = 0.40
+    FACADE_T   = 0.20  # thick enough to be visible from exterior angles
 
     # South facade (covers south face of whole building)
     bld_w = bld_max_x - bld_min_x
     bpy.ops.mesh.primitive_cube_add(
         size=1,
-        location=(bld_cx, bld_min_y - WALL_T / 2, facade_h / 2))
+        location=(bld_cx, bld_min_y - FACADE_GAP, facade_h / 2))
     fsouth = bpy.context.active_object
     fsouth.name = "ext_facade_south"
-    fsouth.scale = (bld_w + WALL_T * 2, WALL_T, facade_h)
+    fsouth.scale = (bld_w + FACADE_T * 2, FACADE_T, facade_h)
     bpy.ops.object.transform_apply(scale=True)
     fsouth.data.materials.clear()
     fsouth.data.materials.append(_get_mat("stucco_warm"))
@@ -1281,10 +1340,10 @@ def add_exterior_environment(cfg):
     bld_d = bld_max_y - bld_min_y
     bpy.ops.mesh.primitive_cube_add(
         size=1,
-        location=(bld_max_x + WALL_T / 2, bld_cy, facade_h / 2))
+        location=(bld_max_x + FACADE_GAP, bld_cy, facade_h / 2))
     feast = bpy.context.active_object
     feast.name = "ext_facade_east"
-    feast.scale = (WALL_T, bld_d + WALL_T * 2, facade_h)
+    feast.scale = (FACADE_T, bld_d + FACADE_T * 2, facade_h)
     bpy.ops.object.transform_apply(scale=True)
     feast.data.materials.clear()
     feast.data.materials.append(_get_mat("stucco_warm"))
@@ -1292,15 +1351,46 @@ def add_exterior_environment(cfg):
     # West facade
     bpy.ops.mesh.primitive_cube_add(
         size=1,
-        location=(bld_min_x - WALL_T / 2, bld_cy, facade_h / 2))
+        location=(bld_min_x - FACADE_GAP, bld_cy, facade_h / 2))
     fwest = bpy.context.active_object
     fwest.name = "ext_facade_west"
-    fwest.scale = (WALL_T, bld_d + WALL_T * 2, facade_h)
+    fwest.scale = (FACADE_T, bld_d + FACADE_T * 2, facade_h)
     bpy.ops.object.transform_apply(scale=True)
     fwest.data.materials.clear()
     fwest.data.materials.append(_get_mat("stucco_warm"))
 
     print(f"  Exterior environment: ground + pool + {len(palm_positions)} palms + facade panels")
+
+
+# ── Mezzanine floor underside fills ──────────────────────────────────────────
+def add_mez_under_fills(rooms):
+    """For each ground-level room that has a mez room directly above it, add an
+    emissive fill just below the mez floor. Prevents the mez floor from appearing
+    as a dark unlit 'ceiling' in the ground-level room panorama."""
+    ground_rooms = [r for r in rooms if r.get("z_offset", 0) == 0]
+    mez_rooms    = [r for r in rooms if r.get("z_offset", 0) > 0]
+    if not mez_rooms:
+        return
+    _muf = "mat_mez_under"
+    if _muf not in MATS:
+        m = bpy.data.materials.new(_muf)
+        m.use_nodes = True
+        m.node_tree.nodes.clear()
+        em  = m.node_tree.nodes.new("ShaderNodeEmission")
+        em.inputs["Strength"].default_value = 1.2
+        em.inputs["Color"].default_value    = (0.92, 0.89, 0.84, 1.0)
+        out = m.node_tree.nodes.new("ShaderNodeOutputMaterial")
+        m.node_tree.links.new(em.outputs[0], out.inputs[0])
+        MATS[_muf] = m
+    for gr in ground_rooms:
+        for mr in mez_rooms:
+            ox = max(gr["x"], mr["x"]); ox2 = min(gr["x"] + gr["w"], mr["x"] + mr["w"])
+            oy = max(gr["y"], mr["y"]); oy2 = min(gr["y"] + gr["d"], mr["y"] + mr["d"])
+            ow = ox2 - ox; od = oy2 - oy
+            if ow > 0.1 and od > 0.1:
+                mez_z = mr["z_offset"]
+                add_box(f"{gr['id']}_muz_{mr['id']}", ow, od, 0.05, ox, oy, mez_z - 0.08, _muf)
+                print(f"  Mez underside fill: {gr['id']} below {mr['id']} at z={mez_z - 0.08:.2f}")
 
 
 # ── 360° camera setup ─────────────────────────────────────────────────────────
@@ -1316,6 +1406,7 @@ print(f"\nBuilding: {cfg.get('name', 'apartment')}")
 rooms = cfg.get("rooms", [])
 for room in rooms:
     build_room(room)
+add_mez_under_fills(rooms)
 add_exterior_environment(cfg)
 add_room_lights(rooms)
 print(f"Rooms built: {len(rooms)}")
