@@ -1,3 +1,4 @@
+# DEPRECATED 2026-06-10 — unused dead code
 #!/usr/bin/env bash
 # pipeline_zero.sh — Full automation: floor plan + renders → live tour URL
 # Usage: ./pipeline_zero.sh <project_name> <floor_plan.jpg> <renders_dir/> [--bake] [--vr]

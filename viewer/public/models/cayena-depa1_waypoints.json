@@ -1,0 +1,38 @@
+[
+  {
+    "id": "loft_master",
+    "label": "Dormitorio",
+    "position": [
+      1.9,
+      1.8,
+      -1.75
+    ]
+  },
+  {
+    "id": "loft_bano",
+    "label": "Ba\u00f1o",
+    "position": [
+      1.25,
+      1.8,
+      -4.5
+    ]
+  },
+  {
+    "id": "loft_sala",
+    "label": "Sala / Cocina / Comedor",
+    "position": [
+      6.65,
+      1.8,
+      -2.75
+    ]
+  },
+  {
+    "id": "terraza",
+    "label": "Terraza",
+    "position": [
+      11.25,
+      1.8,
+      -2.75
+    ]
+  }
+]

@@ -57,6 +57,18 @@ export const KNOWN_SCENES = [
     url: '/models/bf81-interior.glb',
     baked: false,
   },
+  {
+    id: 'cayena-depa1',
+    label: 'Cayena Loft — Unidad 1',
+    url: '/models/cayena-depa1.glb',
+    baked: false,
+  },
+  {
+    id: 'cayena-loft2',
+    label: 'Cayena Loft — Unidad 2 (Mezanine)',
+    url: '/models/cayena-loft2.glb',
+    baked: false,
+  },
 ];
 
 // Hace HEAD a cada URL y devuelve solo las que responden 200.

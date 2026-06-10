@@ -1,3 +1,4 @@
+# DEPRECATED 2026-06-10 — unused dead code, replaced by gen_panorama.py + enhance_panorama.py + post_render.sh
 """
 render_to_pbr.py — Extract materials from architectural renders and apply to Blender scene.
 Usage: python3 render_to_pbr.py <renders_dir/> <config.json> [--blend-output scene.blend]

@@ -1,0 +1,172 @@
+{
+  "scene": "cayena-loft2",
+  "name": "Cayena Encuentro Loft - Unidad 2 (Mezanine)",
+  "startRoom": "loft_sala",
+  "rooms": [
+    {
+      "id": "loft_sala",
+      "label": "Sala / Cocina / Comedor",
+      "panorama": "/panoramas/cayena-loft2/loft_sala.jpg",
+      "hotspots": [
+        {
+          "target": "loft_mez_master",
+          "label": "Mezanine",
+          "yaw": -101.9,
+          "pitch": -20
+        },
+        {
+          "target": "loft_mez_bano",
+          "label": "Mezanine",
+          "yaw": -72.0,
+          "pitch": -20
+        },
+        {
+          "target": "terraza",
+          "label": "Terraza",
+          "yaw": 90.0,
+          "pitch": -8
+        }
+      ]
+    },
+    {
+      "id": "loft_bano_g",
+      "label": "Baño",
+      "panorama": "/panoramas/cayena-loft2/loft_bano_g.jpg",
+      "hotspots": [
+        {
+          "target": "loft_mez_master",
+          "label": "Mezanine",
+          "yaw": 166.7,
+          "pitch": -20
+        },
+        {
+          "target": "loft_mez_bano",
+          "label": "Mezanine",
+          "yaw": 0.0,
+          "pitch": -20
+        }
+      ]
+    },
+    {
+      "id": "loft_mez_master",
+      "label": "Dormitorio Mezanine",
+      "panorama": "/panoramas/cayena-loft2/loft_mez_master.jpg",
+      "hotspots": [
+        {
+          "target": "loft_sala",
+          "label": "Planta Baja",
+          "yaw": 78.1,
+          "pitch": -20
+        },
+        {
+          "target": "loft_bano_g",
+          "label": "Planta Baja",
+          "yaw": -13.3,
+          "pitch": -20
+        },
+        {
+          "target": "loft_mez_bano",
+          "label": "Baño Mezanine",
+          "yaw": -13.3,
+          "pitch": -8
+        },
+        {
+          "target": "terraza",
+          "label": "Planta Baja",
+          "yaw": 83.9,
+          "pitch": -20
+        }
+      ]
+    },
+    {
+      "id": "loft_mez_bano",
+      "label": "Baño Mezanine",
+      "panorama": "/panoramas/cayena-loft2/loft_mez_bano.jpg",
+      "hotspots": [
+        {
+          "target": "loft_sala",
+          "label": "Planta Baja",
+          "yaw": 108.0,
+          "pitch": -20
+        },
+        {
+          "target": "loft_bano_g",
+          "label": "Planta Baja",
+          "yaw": 0.0,
+          "pitch": -20
+        },
+        {
+          "target": "loft_mez_master",
+          "label": "Dormitorio Mezanine",
+          "yaw": 166.7,
+          "pitch": -8
+        },
+        {
+          "target": "terraza",
+          "label": "Planta Baja",
+          "yaw": 99.9,
+          "pitch": -20
+        }
+      ]
+    },
+    {
+      "id": "terraza",
+      "label": "Terraza",
+      "panorama": "/panoramas/cayena-loft2/terraza.jpg",
+      "hotspots": [
+        {
+          "target": "loft_sala",
+          "label": "Sala / Cocina / Comedor",
+          "yaw": -90.0,
+          "pitch": -8
+        },
+        {
+          "target": "loft_mez_master",
+          "label": "Mezanine",
+          "yaw": -96.1,
+          "pitch": -20
+        },
+        {
+          "target": "loft_mez_bano",
+          "label": "Mezanine",
+          "yaw": -80.1,
+          "pitch": -20
+        }
+      ]
+    }
+  ],
+  "floorplan": {
+    "bounds": {
+      "minX": 0,
+      "minY": 0,
+      "maxX": 13.0,
+      "maxY": 5.5
+    },
+    "rooms": [
+      {
+        "id": "loft_sala",
+        "x": 3.8,
+        "y": 0,
+        "w": 5.7,
+        "h": 5.5,
+        "label": "Sala / Cocina / Comedor"
+      },
+      {
+        "id": "loft_bano_g",
+        "x": 0,
+        "y": 3.5,
+        "w": 2.5,
+        "h": 2.0,
+        "label": "Baño"
+      },
+      {
+        "id": "terraza",
+        "x": 9.5,
+        "y": 0,
+        "w": 3.5,
+        "h": 5.5,
+        "label": "Terraza"
+      }
+    ]
+  }
+}

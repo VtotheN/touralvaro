@@ -34,3 +34,12 @@ viewer/public/models/*.glb
 
 # Temp pipeline outputs
 /tmp/pipeline_*/
+
+# Large binaries (Real-ESRGAN ncnn-vulkan, ~120MB)
+pipeline/_realesrgan/
+
+# PBR textures (~89MB, Polyhaven/AmbientCG CC0 — re-download via pipeline/download_pbr.py)
+pbr_textures/
+
+# Blender model cache
+pipeline/models/

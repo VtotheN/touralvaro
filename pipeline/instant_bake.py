@@ -1,3 +1,4 @@
+# DEPRECATED 2026-06-10 — unused dead code, replaced by gen_panorama.py + enhance_panorama.py + post_render.sh
 """
 instant_bake.py — Automated lighting bake for touralvaro pipeline.
 Usage: blender --background --python instant_bake.py -- <input.glb> <output.glb>

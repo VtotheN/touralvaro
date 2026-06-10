@@ -126,6 +126,24 @@
       #topbar { flex-wrap: wrap; right: 8px; top: 8px; max-width: calc(100vw - 16px); }
       #topbar select, #topbar button { font-size: 11px; padding: 4px 7px; }
     }
+
+    /* ── Tour 360° button ── */
+    #pano-mode-btn {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+      background: rgba(0,0,0,0.70); color: #fff;
+      border: 1px solid rgba(255,255,255,0.22);
+      padding: 8px 20px; border-radius: 20px;
+      cursor: pointer; font-size: 14px; font-weight: 600;
+      font-family: -apple-system, system-ui, sans-serif;
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+      z-index: 12; letter-spacing: -0.01em;
+      transition: background 0.15s, border-color 0.15s, transform 0.15s;
+    }
+    #pano-mode-btn:hover {
+      background: rgba(74,158,255,0.55);
+      border-color: rgba(74,158,255,0.7);
+      transform: translateX(-50%) scale(1.04);
+    }
   </style>
 </head>
 <body>
@@ -161,6 +179,10 @@
 
   <div id="stats"></div>
   <div id="fps"></div>
+
+  <button id="pano-mode-btn" onclick="(function(){const p=new URLSearchParams(window.location.search);const s=p.get('scene')||'';const u=new URL(window.location);u.searchParams.set('mode','pano');if(s)u.searchParams.set('scene',s);window.location.href=u.toString();})()">
+    Tour 360°
+  </button>
 
   <script type="module" src="/src/main.js"></script>
 </body>

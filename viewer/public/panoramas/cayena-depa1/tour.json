@@ -1,0 +1,113 @@
+{
+  "scene": "cayena-depa1",
+  "name": "Cayena Encuentro Loft - Unidad 1",
+  "startRoom": "loft_sala",
+  "rooms": [
+    {
+      "id": "loft_master",
+      "label": "Dormitorio",
+      "panorama": "/panoramas/cayena-depa1/loft_master.jpg",
+      "hotspots": [
+        {
+          "target": "loft_bano",
+          "label": "Baño",
+          "yaw": -13.3,
+          "pitch": -8
+        },
+        {
+          "target": "loft_sala",
+          "label": "Sala / Cocina / Comedor",
+          "yaw": 78.1,
+          "pitch": -8
+        }
+      ]
+    },
+    {
+      "id": "loft_bano",
+      "label": "Baño",
+      "panorama": "/panoramas/cayena-depa1/loft_bano.jpg",
+      "hotspots": [
+        {
+          "target": "loft_master",
+          "label": "Dormitorio",
+          "yaw": 166.7,
+          "pitch": -8
+        }
+      ]
+    },
+    {
+      "id": "loft_sala",
+      "label": "Sala / Cocina / Comedor",
+      "panorama": "/panoramas/cayena-depa1/loft_sala.jpg",
+      "hotspots": [
+        {
+          "target": "loft_master",
+          "label": "Dormitorio",
+          "yaw": -101.9,
+          "pitch": -8
+        },
+        {
+          "target": "terraza",
+          "label": "Terraza",
+          "yaw": 90.0,
+          "pitch": -8
+        }
+      ]
+    },
+    {
+      "id": "terraza",
+      "label": "Terraza",
+      "panorama": "/panoramas/cayena-depa1/terraza.jpg",
+      "hotspots": [
+        {
+          "target": "loft_sala",
+          "label": "Sala / Cocina / Comedor",
+          "yaw": -90.0,
+          "pitch": -8
+        }
+      ]
+    }
+  ],
+  "floorplan": {
+    "bounds": {
+      "minX": 0,
+      "minY": 0,
+      "maxX": 13.0,
+      "maxY": 5.5
+    },
+    "rooms": [
+      {
+        "id": "loft_master",
+        "x": 0,
+        "y": 0,
+        "w": 3.8,
+        "h": 3.5,
+        "label": "Dormitorio"
+      },
+      {
+        "id": "loft_bano",
+        "x": 0,
+        "y": 3.5,
+        "w": 2.5,
+        "h": 2.0,
+        "label": "Baño"
+      },
+      {
+        "id": "loft_sala",
+        "x": 3.8,
+        "y": 0,
+        "w": 5.7,
+        "h": 5.5,
+        "label": "Sala / Cocina / Comedor"
+      },
+      {
+        "id": "terraza",
+        "x": 9.5,
+        "y": 0,
+        "w": 3.5,
+        "h": 5.5,
+        "label": "Terraza"
+      }
+    ]
+  }
+}

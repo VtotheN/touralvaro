@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cayena Encuentro Loft — Unidad 1</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css">
+<script src="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js"></script>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; background: #0a0a0f; font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif; }
+  #viewer { width: 100%; height: 100vh; }
+
+  #title-bar {
+    position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+    background: rgba(10,10,15,0.72); color: #fff;
+    padding: 8px 24px; border-radius: 24px;
+    font-size: 13px; font-weight: 600; letter-spacing: 0.02em;
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.12);
+    z-index: 100; pointer-events: none; white-space: nowrap;
+  }
+  #title-bar .unit { opacity: 0.55; font-weight: 400; }
+
+  #ui {
+    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 6px; z-index: 100; flex-wrap: nowrap;
+    background: rgba(10,10,15,0.65);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 28px; padding: 6px 10px;
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  }
+  .room-btn {
+    background: transparent; color: rgba(255,255,255,0.75);
+    border: none; border-radius: 20px;
+    padding: 7px 16px; font-size: 12px; font-weight: 500;
+    cursor: pointer; transition: all 0.18s ease;
+    white-space: nowrap;
+  }
+  .room-btn:hover { background: rgba(255,255,255,0.10); color: #fff; }
+  .room-btn.active { background: rgba(255,255,255,0.15); color: #fff; font-weight: 600; }
+
+  #loader {
+    position: fixed; inset: 0; background: #0a0a0f;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    z-index: 200; transition: opacity 0.6s ease;
+  }
+  #loader.hidden { opacity: 0; pointer-events: none; }
+  .loader-ring {
+    width: 42px; height: 42px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.12);
+    border-top-color: rgba(255,255,255,0.75);
+    animation: spin 0.9s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loader-text { color: rgba(255,255,255,0.45); font-size: 12px; margin-top: 14px; letter-spacing: 0.06em; }
+
+  #fs-btn {
+    position: fixed; top: 16px; right: 20px;
+    background: rgba(10,10,15,0.65); border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 50%; width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; z-index: 100;
+    backdrop-filter: blur(12px); color: rgba(255,255,255,0.7); font-size: 14px;
+    transition: background 0.15s;
+  }
+  #fs-btn:hover { background: rgba(255,255,255,0.12); color: #fff; }
+
+  #room-name {
+    position: fixed; bottom: 78px; left: 50%; transform: translateX(-50%);
+    color: rgba(255,255,255,0.55); font-size: 11px; letter-spacing: 0.08em;
+    text-transform: uppercase; pointer-events: none; z-index: 100;
+    transition: opacity 0.3s;
+  }
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="loader-ring"></div>
+  <div class="loader-text">CARGANDO TOUR</div>
+</div>
+
+<div id="title-bar">Cayena Encuentro Loft &nbsp;<span class="unit">— Unidad 1</span></div>
+<div id="fs-btn" onclick="toggleFullscreen()" title="Pantalla completa">⤢</div>
+<div id="viewer"></div>
+<div id="room-name"></div>
+
+<div id="ui">
+  <button class="room-btn" onclick="go('loft_sala')">Sala / Cocina</button>
+  <button class="room-btn" onclick="go('loft_master')">Dormitorio</button>
+  <button class="room-btn" onclick="go('loft_bano')">Baño</button>
+  <button class="room-btn" onclick="go('terraza')">Terraza</button>
+</div>
+
+<script>
+const BASE     = 'http://localhost:5175';
+const PANO_DIR = BASE + '/panoramas/cayena-depa1/enhanced';
+
+const ROOM_ORDER  = ['loft_sala','loft_master','loft_bano','terraza'];
+const ROOM_TITLES = {
+  loft_sala:   'Sala / Cocina / Comedor',
+  loft_master: 'Dormitorio',
+  loft_bano:   'Baño',
+  terraza:     'Terraza',
+};
+
+const ROOMS = {
+  loft_sala: {
+    title: 'Sala / Cocina / Comedor',
+    panorama: PANO_DIR + '/loft_sala.jpg',
+    hotSpots: [
+      { type:'scene', sceneId:'loft_master', text:'Dormitorio ›', yaw:-101.9, pitch:-8 },
+      { type:'scene', sceneId:'terraza',     text:'Terraza ›',    yaw:90.0,   pitch:-8 },
+    ]
+  },
+  loft_master: {
+    title: 'Dormitorio',
+    panorama: PANO_DIR + '/loft_master.jpg',
+    hotSpots: [
+      { type:'scene', sceneId:'loft_bano', text:'Baño ›',         yaw:-13.3, pitch:-8 },
+      { type:'scene', sceneId:'loft_sala', text:'‹ Sala / Cocina', yaw:78.1,  pitch:-8 },
+    ]
+  },
+  loft_bano: {
+    title: 'Baño',
+    panorama: PANO_DIR + '/loft_bano.jpg',
+    hotSpots: [
+      { type:'scene', sceneId:'loft_master', text:'‹ Dormitorio', yaw:166.7, pitch:-8 },
+    ]
+  },
+  terraza: {
+    title: 'Terraza',
+    panorama: PANO_DIR + '/terraza.jpg',
+    hotSpots: [
+      { type:'scene', sceneId:'loft_sala', text:'‹ Interior', yaw:-90.0, pitch:-8 },
+    ]
+  },
+};
+
+function hsStyle(div, args) {
+  div.innerHTML = args.text;
+  Object.assign(div.style, {
+    background: 'rgba(10,10,15,0.72)',
+    color: '#fff', border: '1px solid rgba(255,255,255,0.20)',
+    padding: '5px 14px', borderRadius: '18px',
+    fontSize: '12px', fontWeight: '600',
+    fontFamily: '-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif',
+    backdropFilter: 'blur(10px)', letterSpacing: '0.02em',
+    whiteSpace: 'nowrap', cursor: 'pointer',
+  });
+}
+
+const scenes = {};
+for (const [id, r] of Object.entries(ROOMS)) {
+  scenes[id] = {
+    type: 'equirectangular',
+    panorama: r.panorama,
+    title: r.title,
+    hotSpots: r.hotSpots.map(hs => ({
+      ...hs, cssClass: 'custom-hotspot',
+      createTooltipFunc: hsStyle, createTooltipArgs: hs,
+    })),
+  };
+}
+
+let viewer;
+function go(sceneId) {
+  if (viewer) viewer.loadScene(sceneId);
+  document.querySelectorAll('.room-btn').forEach(b => b.classList.remove('active'));
+  const idx = ROOM_ORDER.indexOf(sceneId);
+  if (idx >= 0) document.querySelectorAll('.room-btn')[idx].classList.add('active');
+  const rn = document.getElementById('room-name');
+  rn.textContent = ROOM_TITLES[sceneId] || '';
+  rn.style.opacity = '1';
+  setTimeout(() => { rn.style.opacity = '0'; }, 2800);
+}
+
+viewer = pannellum.viewer('viewer', {
+  default: {
+    firstScene: 'loft_sala',
+    sceneFadeDuration: 400,
+    autoLoad: true,
+    showControls: false,
+    hfov: 95,
+    compass: false,
+    mouseZoom: true,
+    keyboardZoom: true,
+  },
+  scenes,
+});
+
+viewer.on('load', () => {
+  const loader = document.getElementById('loader');
+  if (loader) { loader.classList.add('hidden'); setTimeout(() => loader.remove(), 700); }
+});
+
+viewer.on('scenechange', id => {
+  document.querySelectorAll('.room-btn').forEach(b => b.classList.remove('active'));
+  const idx = ROOM_ORDER.indexOf(id);
+  if (idx >= 0) document.querySelectorAll('.room-btn')[idx].classList.add('active');
+});
+
+document.querySelectorAll('.room-btn')[0].classList.add('active');
+
+function toggleFullscreen() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen().catch(() => {});
+  } else {
+    document.exitFullscreen().catch(() => {});
+  }
+}
+</script>
+</body>
+</html>

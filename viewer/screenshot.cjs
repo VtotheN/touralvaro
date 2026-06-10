@@ -17,14 +17,13 @@ const CFG_PATH = path.join(ROOT, 'test_projects', SCENE, 'config.json');
 // Auto-compute camera from room bounds (Three.js coords)
 function roomCamera(room) {
   const x0 = room.x, y0 = room.y, w = room.w, d = room.d;
-  // Camera at front-left (20%/20%), high eye level, looking steeply down toward
-  // back-right (70%/80%) at near-floor height — shows all furniture regardless of layout.
+  const zOff = room.z_offset || 0;  // mezzanine lift in Three.js Y space
   const camX  = x0 + w * 0.20;
   const camZ  = -(y0 + d * 0.20);
-  const camY  = 1.70;
+  const camY  = zOff + 1.70;
   const lookX = x0 + w * 0.70;
   const lookZ = -(y0 + d * 0.80);
-  const lookY = 0.20;
+  const lookY = zOff + 0.20;
   return [camX, camY, camZ, lookX, lookY, lookZ];
 }
 

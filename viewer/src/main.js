@@ -394,6 +394,15 @@ function tick() {
 
 // ── Bootstrap ─────────────────────────────────────────────────────────────────
 async function bootstrap() {
+  // Panoramic mode — bypass FPS viewer entirely
+  const _urlParams = new URLSearchParams(window.location.search);
+  if (_urlParams.get('mode') === 'pano') {
+    const sceneId = _urlParams.get('scene') || 'cayena-depa1';
+    const { startPanoViewer } = await import('./panoViewer.js');
+    await startPanoViewer(document.body, sceneId);
+    return;
+  }
+
   const available = await discoverAvailableScenes();
 
   if (sceneSelect) {

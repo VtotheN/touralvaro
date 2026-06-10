@@ -1,3 +1,4 @@
+# DEPRECATED 2026-06-10 — unused dead code, replaced by gen_panorama.py + enhance_panorama.py + post_render.sh
 #!/usr/bin/env python3
 """Universal tour build pipeline.
 Usage: python3 pipeline/build_tour.py <project-dir> [scene-id]

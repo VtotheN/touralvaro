@@ -38,6 +38,7 @@ with open(config_path) as f:
 
 WALL_H = cfg.get("ceiling_height", 2.8)
 WALL_T = 0.12  # wall thickness
+THEME  = cfg.get("theme", "")
 
 # ── Reset scene ───────────────────────────────────────────────────────────────
 bpy.ops.wm.read_factory_settings(use_empty=True)
@@ -166,15 +167,20 @@ TEX_CONCRETE   = ensure_texture("concrete_wall_005")
 
 # Room-type to floor texture mapping
 FLOOR_TEX = {
-    "sala":    TEX_WOOD_FLOOR,
-    "comedor": TEX_WOOD_FLOOR,
-    "master":  TEX_WOOD_FLOOR,
-    "hab":     TEX_WOOD_FLOOR,
-    "hab2":    TEX_WOOD_FLOOR,
-    "pasillo": TEX_CONCRETE,
-    "cocina":  TEX_CONCRETE,
-    "baño":    TEX_CONCRETE,
-    "_default": TEX_WOOD_FLOOR,
+    "sala":        TEX_WOOD_FLOOR,
+    "comedor":     TEX_WOOD_FLOOR,
+    "master":      TEX_WOOD_FLOOR,
+    "loft_master": TEX_WOOD_FLOOR,
+    "loft_mez":    TEX_WOOD_FLOOR,
+    "hab":         TEX_WOOD_FLOOR,
+    "hab2":        TEX_WOOD_FLOOR,
+    "pasillo":     TEX_CONCRETE,
+    "cocina":      TEX_CONCRETE,
+    "baño":        TEX_CONCRETE,
+    "loft_bano":   TEX_CONCRETE,
+    "loft_sala":   TEX_CONCRETE,
+    "terraza":     TEX_CONCRETE,
+    "_default":    TEX_WOOD_FLOOR,
 }
 
 def get_floor_tex(room_id):
@@ -205,6 +211,19 @@ MATS = {
     "metal_chrome":   make_mat("metal_chrome",   (0.72, 0.72, 0.75), 0.05),
     "rug_warm":       make_mat("rug_warm",       (0.55, 0.42, 0.32), 0.95),
     "cushion_blue":   make_mat("cushion_blue",   (0.28, 0.38, 0.58), 0.88),
+    # Caribbean luxury palette
+    "travertine":     make_mat("travertine",     (0.84, 0.78, 0.67), 0.55),
+    "stucco_warm":    make_mat("stucco_warm",    (0.91, 0.87, 0.80), 0.88),
+    "ceiling_warm":   make_mat("ceiling_warm",   (0.97, 0.95, 0.92), 0.94),
+    "wood_walnut":    make_mat("wood_walnut",    (0.32, 0.19, 0.09), 0.62),
+    "wood_oak":       make_mat("wood_oak",       (0.58, 0.40, 0.20), 0.68),
+    "rattan_cream":   make_mat("rattan_cream",   (0.82, 0.74, 0.62), 0.88),
+    "linen_white":    make_mat("linen_white",    (0.94, 0.92, 0.89), 0.92),
+    "charcoal":       make_mat("charcoal",       (0.16, 0.15, 0.14), 0.85),
+    "dark_stone":     make_mat("dark_stone",     (0.22, 0.20, 0.18), 0.35),
+    "outdoor_stone":  make_mat("outdoor_stone",  (0.70, 0.65, 0.58), 0.82),
+    "tropical_green": make_mat("tropical_green", (0.18, 0.40, 0.20), 0.88),
+    "kitchen_black":  make_mat("kitchen_black",  (0.10, 0.10, 0.10), 0.40),
 }
 glass_mat = MATS["glass"]
 glass_mat.blend_method = "BLEND"
@@ -249,7 +268,7 @@ def cut_opening(target_obj, x, y, z, w, d, h):
     bpy.data.objects.remove(cutter, do_unlink=True)
 
 # ── Wall builder with openings ────────────────────────────────────────────────
-def build_wall(name, x0, y0, x1, y1, height, openings=None, mat_name="wall_white"):
+def build_wall(name, x0, y0, x1, y1, height, openings=None, mat_name="wall_white", z_off=0.0):
     """Build a wall segment with optional door/window cutouts."""
     dx = x1 - x0
     dy = y1 - y0
@@ -258,7 +277,7 @@ def build_wall(name, x0, y0, x1, y1, height, openings=None, mat_name="wall_white
     cx = (x0 + x1) / 2
     cy = (y0 + y1) / 2
 
-    bpy.ops.mesh.primitive_cube_add(size=1, location=(cx, cy, height/2))
+    bpy.ops.mesh.primitive_cube_add(size=1, location=(cx, cy, z_off + height/2))
     wall = bpy.context.active_object
     wall.name = name
     wall.scale = (length, WALL_T, height)
@@ -317,18 +336,30 @@ def build_room(room):
     w, d = room["w"], room["d"]
     doors = room.get("doors", [])
     windows = room.get("windows", [])
-    is_kitchen = "cocina" in rid.lower() or "kitchen" in rid.lower()
-    is_bathroom = "baño" in rid.lower() or "bath" in rid.lower()
+    is_kitchen = "cocina" in rid.lower() or "kitchen" in rid.lower() or "loft_sala" in rid.lower()
+    is_bathroom = "baño" in rid.lower() or "bath" in rid.lower() or "loft_bano" in rid.lower()
+    is_caribbean = THEME == "caribbean_luxury"
+    z_off = room.get("z_offset", 0.0)
+
+    # Theme-aware materials
+    wall_mat    = "stucco_warm" if is_caribbean else "wall_white"
+    ceiling_mat = "ceiling_warm" if is_caribbean else "ceiling"
+    base_mat    = "wood_oak"    if is_caribbean else "baseboard"
 
     # PBR floor material per room
     floor_tex = get_floor_tex(rid)
     pbr_floor_name = f"floor_{rid}"
     tile_scale = 1.5 if (is_kitchen or is_bathroom) else 2.5
-    floor_pbr = make_pbr_mat(pbr_floor_name, floor_tex, tile_scale=tile_scale, roughness=0.62)
+    if is_caribbean and "terraza" in rid.lower():
+        floor_pbr = MATS["outdoor_stone"]
+    elif is_caribbean and ("sala" in rid.lower() or "bano" in rid.lower() or "loft" in rid.lower()):
+        floor_pbr = MATS["travertine"]
+    else:
+        floor_pbr = make_pbr_mat(pbr_floor_name, floor_tex, tile_scale=tile_scale, roughness=0.62)
     MATS[pbr_floor_name] = floor_pbr
 
     # Floor with UV smart project for texture
-    floor_obj = add_plane(f"{rid}_floor", w, d, x, y, 0, mat_name="wall_white")
+    floor_obj = add_plane(f"{rid}_floor", w, d, x, y, z_off, mat_name="wall_white")
     floor_obj.data.materials.clear()
     floor_obj.data.materials.append(floor_pbr)
     # UV unwrap floor
@@ -340,13 +371,13 @@ def build_room(room):
     bpy.ops.object.editmode_toggle()
 
     # Ceiling
-    add_plane(f"{rid}_ceiling", w, d, x, y, WALL_H, rx=math.pi, mat_name="ceiling")
+    add_plane(f"{rid}_ceiling", w, d, x, y, z_off + WALL_H, rx=math.pi, mat_name=ceiling_mat)
 
     # Baseboard (decorative trim at floor level)
-    add_box(f"{rid}_base_s", w, 0.01, 0.10, x, y, 0, "baseboard")
-    add_box(f"{rid}_base_n", w, 0.01, 0.10, x, y + d - 0.01, 0, "baseboard")
-    add_box(f"{rid}_base_w", 0.01, d, 0.10, x, y, 0, "baseboard")
-    add_box(f"{rid}_base_e", 0.01, d, 0.10, x + w - 0.01, y, 0, "baseboard")
+    add_box(f"{rid}_base_s", w, 0.01, 0.10, x, y,              z_off, base_mat)
+    add_box(f"{rid}_base_n", w, 0.01, 0.10, x, y + d - 0.01,   z_off, base_mat)
+    add_box(f"{rid}_base_w", 0.01, d, 0.10, x, y,              z_off, base_mat)
+    add_box(f"{rid}_base_e", 0.01, d, 0.10, x + w - 0.01, y,   z_off, base_mat)
 
     WALL_ALIAS = {"front": "south", "back": "north", "left": "west", "right": "east",
                   "south": "south", "north": "north", "west": "west", "east": "east"}
@@ -358,31 +389,32 @@ def build_room(room):
         key = WALL_ALIAS.get(win["wall"], "south")
         wall_openings[key].append({**win, "sill": win.get("sill", 0.9)})
 
-    build_wall(f"{rid}_wall_s", x, y, x+w, y, WALL_H, wall_openings["south"])
-    build_wall(f"{rid}_wall_n", x, y+d, x+w, y+d, WALL_H, wall_openings["north"])
-    build_wall(f"{rid}_wall_w", x, y, x, y+d, WALL_H, wall_openings["west"])
-    build_wall(f"{rid}_wall_e", x+w, y, x+w, y+d, WALL_H, wall_openings["east"])
+    build_wall(f"{rid}_wall_s", x, y, x+w, y, WALL_H, wall_openings["south"], wall_mat, z_off)
+    build_wall(f"{rid}_wall_n", x, y+d, x+w, y+d, WALL_H, wall_openings["north"], wall_mat, z_off)
+    build_wall(f"{rid}_wall_w", x, y, x, y+d, WALL_H, wall_openings["west"], wall_mat, z_off)
+    build_wall(f"{rid}_wall_e", x+w, y, x+w, y+d, WALL_H, wall_openings["east"], wall_mat, z_off)
 
-    # Waypoint at center, eye height
+    # Waypoint at center, eye height (z_off shifts mezzanine up in Three.js Y)
     cx = x + w/2
     cy = y + d/2
     waypoints.append({
         "id": rid,
         "label": label,
-        "position": [round(cx, 3), 1.8, round(-cy, 3)]  # Blender→Three.js: Y→-Z
+        "position": [round(cx, 3), round(1.8 + z_off, 3), round(-cy, 3)]
     })
-    print(f"  Built room: {rid} ({w}×{d}m)")
+    print(f"  Built room: {rid} ({w}×{d}m) z={z_off}")
 
 # ── Lighting (auto per room) ──────────────────────────────────────────────────
 def add_room_lights(rooms):
     for room in rooms:
         x, y = room["x"], room["y"]
         w, d = room["w"], room["d"]
+        z_off = room.get("z_offset", 0.0)
         cx = x + w/2
         cy = y + d/2
         area = w * d
         # POINT lights (GLTF-exportable; AREA not supported by exporter)
-        bpy.ops.object.light_add(type="POINT", location=(cx, cy, WALL_H - 0.3))
+        bpy.ops.object.light_add(type="POINT", location=(cx, cy, z_off + WALL_H - 0.3))
         light = bpy.context.active_object
         light.name = f"light_{room['id']}"
         light.data.energy = area * 250  # candela, proportional to room area
@@ -407,13 +439,14 @@ bg.inputs["Color"].default_value = (0.6, 0.7, 1.0, 1.0)
 bg.inputs["Strength"].default_value = 0.4
 
 # ── Furniture placement ───────────────────────────────────────────────────────
-def place_furniture(room_id, x0, y0, w, d, scene):
+def place_furniture(room_id, x0, y0, w, d, scene, z_off=0.0):
     xi  = x0 + 0.15        # inner x min (west wall inner face)
     yi  = y0 + 0.15        # inner y min (front wall inner face)
     xe  = x0 + w - 0.15   # inner x max (east wall inner face)
     ye  = y0 + d - 0.15   # inner y max (back wall inner face)
     iw  = xe - xi          # inner width
     id_ = ye - yi          # inner depth
+    _z  = lambda z: z + z_off  # offset Z for mezzanine rooms
 
     if room_id == "sala":
         sw  = min(iw - 0.40, 3.50)
@@ -524,6 +557,123 @@ def place_furniture(room_id, x0, y0, w, d, scene):
         add_box("pas_deco1",       0.12, 0.12, 0.22, conX + 0.15,  yi + 0.01, 0.85, "ceramic_white")
         add_box("pas_deco2",       0.18, 0.18, 0.35, conX + 0.55,  yi + 0.01, 0.85, "cushion_blue")
 
+    elif "loft_master" in room_id or "loft_mez_master" in room_id:
+        # Full-wall walnut headboard panel spanning north wall
+        add_box(f"{room_id}_headpanel", w, 0.10, WALL_H * 0.80, x0, ye - 0.10, _z(0.00), "wood_walnut")
+        # Bed
+        bW = min(iw * 0.70, 1.80)
+        bD = min(id_ * 0.60, 2.00)
+        bX = xi + (iw - bW) / 2
+        bY = ye - bD - 0.10
+        add_box(f"{room_id}_bed_frame",  bW,          bD,    0.22, bX,             bY,              _z(0.00), "wood_walnut")
+        add_box(f"{room_id}_mattress",   bW,          bD,    0.24, bX,             bY,              _z(0.22), "linen_white")
+        add_box(f"{room_id}_bedcover",   bW,          bD,    0.07, bX,             bY,              _z(0.46), "charcoal")
+        add_box(f"{room_id}_pillow1",    bW * 0.45,   0.50,  0.12, bX + 0.04,      bY + bD - 0.55,  _z(0.46), "linen_white")
+        add_box(f"{room_id}_pillow2",    bW * 0.45,   0.50,  0.12, bX + bW * 0.50, bY + bD - 0.55,  _z(0.46), "linen_white")
+        # Nightstands
+        add_box(f"{room_id}_ns_l", 0.48, 0.42, 0.50, bX - 0.58,       bY + 0.10, _z(0.00), "wood_walnut")
+        add_box(f"{room_id}_ns_r", 0.48, 0.42, 0.50, bX + bW + 0.10,  bY + 0.10, _z(0.00), "wood_walnut")
+        # Wall TV on south wall
+        tvW = min(iw * 0.55, 1.20)
+        tvX = xi + (iw - tvW) / 2
+        add_box(f"{room_id}_tv", tvW, 0.04, 0.62, tvX, yi - 0.02, _z(0.80), "metal_chrome")
+        # Ceiling fan (hub + blades)
+        fcx = x0 + w / 2
+        fcy = y0 + d / 2
+        fz  = _z(WALL_H - 0.20)
+        add_box(f"{room_id}_fan_hub", 0.20, 0.20, 0.12, fcx - 0.10, fcy - 0.10, fz, "metal_chrome")
+        add_box(f"{room_id}_fan_b1",  0.80, 0.14, 0.03, fcx - 0.40, fcy - 0.07, fz - 0.03, "wood_oak")
+        add_box(f"{room_id}_fan_b3",  0.14, 0.80, 0.03, fcx - 0.07, fcy - 0.40, fz - 0.03, "wood_oak")
+        # Tropical plant
+        px = bX + bW + 0.10
+        py = bY
+        add_box(f"{room_id}_pot",    0.28, 0.28, 0.30, px,        py,        _z(0.00), "travertine")
+        add_box(f"{room_id}_trunk",  0.08, 0.08, 0.55, px + 0.10, py + 0.10, _z(0.30), "wood_walnut")
+        add_box(f"{room_id}_canopy", 0.50, 0.50, 0.25, px - 0.11, py - 0.11, _z(0.85), "tropical_green")
+
+    elif "loft_bano" in room_id or "loft_mez_bano" in room_id:
+        add_box(f"{room_id}_toilet_base", 0.38, 0.55, 0.40, xe - 0.42, yi,        _z(0.00), "ceramic_white")
+        add_box(f"{room_id}_toilet_tank", 0.35, 0.16, 0.32, xe - 0.40, yi,        _z(0.40), "ceramic_white")
+        add_box(f"{room_id}_toilet_seat", 0.34, 0.45, 0.04, xe - 0.40, yi + 0.02, _z(0.38), "ceramic_white")
+        vanW = min(iw * 0.42, 0.80)
+        add_box(f"{room_id}_vanity_cab",  vanW,        0.50, 0.84, xi,         yi,         _z(0.00), "wood_walnut")
+        add_box(f"{room_id}_vanity_top",  vanW + 0.06, 0.54, 0.03, xi - 0.03,  yi - 0.02,  _z(0.84), "dark_stone")
+        add_box(f"{room_id}_sink",        vanW - 0.20, 0.38, 0.06, xi + 0.10,  yi + 0.07,  _z(0.84), "ceramic_white")
+        add_box(f"{room_id}_mirror",      vanW,        0.03, 0.80, xi,         yi - 0.03,  _z(0.90), "metal_chrome")
+        sh = min(min(iw, id_) * 0.50, 0.85)
+        add_box(f"{room_id}_shower_tray", sh, sh, 0.06, xe - sh, ye - sh, _z(0.00), "travertine")
+        add_box(f"{room_id}_shower_w1",   sh, 0.04, 2.00, xe - sh, ye - sh - 0.04, _z(0.00), "ceramic_white")
+        add_box(f"{room_id}_shower_w2",   0.04, sh + 0.08, 2.00, xe - sh - 0.04, ye - sh - 0.08, _z(0.00), "ceramic_white")
+
+    elif "loft_sala" in room_id:
+        # Kitchen cabinets along north wall (ye side)
+        cabW = iw - 0.30
+        add_box(f"{room_id}_cab_base",  cabW,        0.58, 0.90, xi,          ye - 0.58, _z(0.00), "kitchen_white")
+        add_box(f"{room_id}_cab_top",   cabW + 0.06, 0.62, 0.03, xi - 0.03,   ye - 0.60, _z(0.90), "dark_stone")
+        add_box(f"{room_id}_cab_upper", cabW,        0.36, 0.72, xi,          ye - 0.36, _z(1.48), "kitchen_white")
+        add_box(f"{room_id}_cooktop",   0.60, 0.50, 0.03, xi + iw * 0.35, ye - 0.55, _z(0.90), "kitchen_black")
+        add_box(f"{room_id}_sink",      0.48, 0.38, 0.05, xi + 0.10, ye - 0.52, _z(0.90), "metal_chrome")
+        # Kitchen island center-left
+        islW = min(iw * 0.32, 1.40)
+        islD = min(id_ * 0.14, 0.80)
+        islX = xi + iw * 0.15
+        islY = yi + id_ * 0.50
+        add_box(f"{room_id}_isl_base",  islW,        islD,        0.92, islX,        islY,        _z(0.00), "kitchen_white")
+        add_box(f"{room_id}_isl_top",   islW + 0.06, islD + 0.06, 0.03, islX - 0.03, islY - 0.03, _z(0.92), "dark_stone")
+        for i in range(2):
+            sx = islX + 0.18 + i * (islW / 2)
+            add_box(f"{room_id}_stool{i}_seat", 0.40, 0.40, 0.04, sx, islY - 0.55, _z(0.70), "rattan_cream")
+            add_box(f"{room_id}_stool{i}_leg",  0.06, 0.06, 0.70, sx + 0.17, islY - 0.38, _z(0.00), "metal_chrome")
+        # Dining table center-right
+        dtW = min(iw * 0.28, 1.50)
+        dtD = min(id_ * 0.16, 0.85)
+        dtX = xi + iw * 0.58
+        dtY = yi + id_ * 0.48
+        add_box(f"{room_id}_dtable_top",  dtW,        dtD,        0.04, dtX,        dtY,        _z(0.74), "wood_walnut")
+        add_box(f"{room_id}_dtable_base", dtW - 0.08, dtD - 0.08, 0.74, dtX + 0.04, dtY + 0.04, _z(0.00), "wood_walnut")
+        chair_pos = [
+            (dtX + 0.10,       dtY - 0.55),
+            (dtX + dtW - 0.50, dtY - 0.55),
+            (dtX + 0.10,       dtY + dtD + 0.15),
+            (dtX + dtW - 0.50, dtY + dtD + 0.15),
+        ]
+        for i, (cx, cy) in enumerate(chair_pos):
+            add_box(f"{room_id}_dc{i}_seat", 0.45, 0.45, 0.44, cx, cy, _z(0.00), "rattan_cream")
+            add_box(f"{room_id}_dc{i}_back", 0.45, 0.06, 0.44, cx, cy + 0.38, _z(0.44), "rattan_cream")
+        # Sofa near south wall (yi), facing kitchen/north
+        sfW = min(iw * 0.52, 2.80)
+        sfX = xi + (iw - sfW) / 2
+        sfY = yi
+        add_box(f"{room_id}_sofa_back",  sfW,          0.20, 0.92, sfX,              sfY,          _z(0.00), "linen_white")
+        add_box(f"{room_id}_sofa_base",  sfW,          0.95, 0.44, sfX,              sfY + 0.20,   _z(0.00), "linen_white")
+        add_box(f"{room_id}_sofa_arm_l", 0.20,         0.95, 0.64, sfX,              sfY + 0.20,   _z(0.00), "linen_white")
+        add_box(f"{room_id}_sofa_arm_r", 0.20,         0.95, 0.64, sfX + sfW - 0.20, sfY + 0.20,   _z(0.00), "linen_white")
+        for i, rx in enumerate([sfX - 0.90, sfX + sfW + 0.10]):
+            add_box(f"{room_id}_ratt{i}_seat", 0.70, 0.70, 0.38, rx, sfY + 0.10, _z(0.00), "rattan_cream")
+            add_box(f"{room_id}_ratt{i}_back", 0.70, 0.12, 0.60, rx, sfY + 0.62, _z(0.38), "rattan_cream")
+        ctW = min(sfW * 0.50, 1.20)
+        ctD = 0.60
+        ctX = xi + (iw - ctW) / 2
+        ctY = sfY + 1.20
+        add_box(f"{room_id}_ct_top",  ctW,        ctD,        0.04, ctX,        ctY,        _z(0.38), "dark_stone")
+        add_box(f"{room_id}_ct_base", ctW - 0.10, ctD - 0.10, 0.38, ctX + 0.05, ctY + 0.05, _z(0.00), "wood_walnut")
+        add_box(f"{room_id}_pot1",    0.30, 0.30, 0.35, xe - 0.40, yi + 0.20, _z(0.00), "travertine")
+        add_box(f"{room_id}_canopy1", 0.55, 0.55, 0.28, xe - 0.52, yi + 0.08, _z(0.35), "tropical_green")
+
+    elif "terraza" in room_id:
+        for i in range(2):
+            lbY = yi + 0.40 + i * 2.40
+            add_box(f"{room_id}_lb{i}_base", 1.80, 0.72, 0.28, xi + 0.20, lbY,        _z(0.00), "rattan_cream")
+            add_box(f"{room_id}_lb{i}_back", 1.80, 0.08, 0.38, xi + 0.20, lbY,        _z(0.28), "rattan_cream")
+            add_box(f"{room_id}_lb{i}_mat",  1.72, 0.66, 0.06, xi + 0.24, lbY + 0.03, _z(0.28), "linen_white")
+        add_box(f"{room_id}_side_table", 0.50, 0.50, 0.45, xi + 0.55, yi + 1.60, _z(0.00), "travertine")
+        for i in range(3):
+            px = xi + iw - 0.40
+            py = yi + 0.50 + i * 1.60
+            add_box(f"{room_id}_plant{i}_pot",    0.32, 0.32, 0.38, px,        py,        _z(0.00), "travertine")
+            add_box(f"{room_id}_plant{i}_trunk",  0.10, 0.10, 0.70, px + 0.11, py + 0.11, _z(0.38), "wood_walnut")
+            add_box(f"{room_id}_plant{i}_canopy", 0.60, 0.60, 0.30, px - 0.14, py - 0.14, _z(1.08), "tropical_green")
+
 
 # ── Build all rooms ───────────────────────────────────────────────────────────
 print(f"\nBuilding: {cfg.get('name', 'apartment')}")
@@ -535,7 +685,7 @@ print(f"Rooms built: {len(rooms)}")
 
 # ── Place furniture ───────────────────────────────────────────────────────────
 for room in rooms:
-    place_furniture(room["id"], room["x"], room["y"], room["w"], room["d"], bpy.context.scene)
+    place_furniture(room["id"], room["x"], room["y"], room["w"], room["d"], bpy.context.scene, room.get("z_offset", 0.0))
 print("Furniture placed")
 
 # ── Export GLB ────────────────────────────────────────────────────────────────
