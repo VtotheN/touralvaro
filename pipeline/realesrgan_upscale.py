@@ -93,9 +93,8 @@ _MODEL = "realesrgan-x4plus"
 
 def upscale(src: Path, dst: Path, final_w: int = 4096, final_h: int = 2048) -> Path:
     """
-    4× Real-ESRGAN upscale, then Lanczos downsample to final_w×final_h.
-    src : 2048×1024 raw render
-    dst : 4096×2048 enhanced output
+    4× Real-ESRGAN upscale. Input 1024×512 → output exactly 4096×2048 (no downsample).
+    If input is larger (e.g. 2048×1024), Lanczos-downsamples after upscale.
     Returns dst path.
     """
     ensure_binary()

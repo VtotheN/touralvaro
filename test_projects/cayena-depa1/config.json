@@ -1,6 +1,7 @@
 {
   "id": "cayena-depa1",
   "name": "Cayena Encuentro Loft - Unidad 1",
+  "render_samples": 32,
   "ceiling_height": 3.0,
   "theme": "caribbean_luxury",
   "rooms": [

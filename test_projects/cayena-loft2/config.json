@@ -1,6 +1,7 @@
 {
   "id": "cayena-loft2",
   "name": "Cayena Encuentro Loft - Unidad 2 (Mezanine)",
+  "render_samples": 32,
   "ceiling_height": 3.0,
   "theme": "caribbean_luxury",
   "rooms": [
